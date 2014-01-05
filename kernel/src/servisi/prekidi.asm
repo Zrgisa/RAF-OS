@@ -73,6 +73,12 @@ set_interrupts:
 		mov     [es:08h*4], ax
 		mov     ax, cs
 		mov     [es:08h*4+2], ax
+		
+		mov     ax, novi_int09				
+		mov     [es:09h*4], ax
+		mov     ax, cs
+		mov     [es:09h*4+2], ax
+		
 		mov     ax, novi_int10				
 		mov     [es:10h*4], ax
 		mov     ax, cs
@@ -103,6 +109,10 @@ novi_int08:									; Poziva stari int 08h pa zatim rutinu za stampanje
 		int 	7Ah							; Pozivamo originalni int 08h
 		call	printer
 		iret
+		
+novi_int09:
+
+	iret
 		
 novi_int10:									; int 10h ne menja flagove tako da ne moramo da ih azuriramo
 		inc		byte [inBios]				; i time dobijamo na brzini, s obzirom da je on sam po sebi
