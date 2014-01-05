@@ -85,7 +85,17 @@ Komanda:
 ; -------------------------
 ; Da li je interna komanda
 ; -------------------------
-        mov     si, input
+		mov     si, input
+		
+        mov     di, jobs_string             ; jobs
+		call    _string_compare
+        jc near suspended
+		
+		mov     di, fg_string             	; fg
+		mov		cl, 2
+        call    _string_strincmp
+        jc near unsuspended
+			
         mov     di, exit_string             ; stop?
         call    _string_compare
         jc near exit
@@ -973,6 +983,39 @@ path:
         
 	.tz    db ';', 0
 	.clear db 'CLEAR', 0
+; ------------------------------------------------------------------	
+suspended:
+	;DEBUG
+	;mov     si, poruka
+    ;call    _print_string
+
+	jmp Komanda
+; ------------------------------------------------------------------
+unsuspended:
+	mov 	si, input
+	call    _string_parse
+	cmp dx, 0
+	jne .nijeDobarParametar
+	
+	cmp cx, 0
+	jne .nijeDobarParametar
+	
+	cmp		bx, 0
+	jne		.dobarParametar
+	
+	.nijeDobarParametar	
+		mov     si, GreskaArgStr                   ; Ako nije, ispisati poruku o gresci
+        call    _print_string
+        jmp     Komanda
+	.dobarParametar
+		mov si, bx
+		call _string_to_int  						; Rezultat ax
+	;DEBUG	
+		;call _int_to_string
+		;mov     si, ax
+		;call    _print_string
+	
+	jmp Komanda
 ; ------------------------------------------------------------------
 exit:
         ret
@@ -1001,7 +1044,7 @@ GreskaPisanja:                              ; Zajednicko za sve operacije koje i
         prompt          db 13,10,'RAF_OS>A:/', 0
 		dodatniProstor	times 256 db 0
         HelpTekst       db 'Interne komande:',13,10,
-                        db 'DIR, TYPE, CLS, HELP, TIME, DATE, VER, COPY, REN, DEL, STOP, MD, RD, CD, PATH, ATTRIB', 13, 10, 0
+                        db 'DIR, TYPE, CLS, HELP, TIME, DATE, VER, COPY, REN, DEL, STOP, MD, RD, CD, PATH, ATTRIB, JOBS', 13, 10, 0
         NePostoji       db 'Ne postoji takva komanda ili program', 13, 10, 0
         NemaImena       db 'Nije zadato ime datoteke', 13, 10, 0
         NemaImena1      db 'Nije zadato ime direktorijuma', 13, 10, 0
@@ -1011,6 +1054,7 @@ GreskaPisanja:                              ; Zajednicko za sve operacije koje i
         DatPrevelika    db 'Izvorna datoteka je suvise velika (max 32KB)', 0
         verzija         db 'RAF_OS', RAF_OS_VER, 13, 10, 0
         pozdrav         db 13,10,'Dobrodosli u Trivijalni skolski operativni sistem: ',0
+		poruka          db 13,10,'Jobs',0
 		Greska_pisanja	db 'Greska upisivanja na disk', 13, 10, 0
 		Err_NP          db 'Zadata putanja ne postoji', 13, 10, 0
         Err_NC          db 'Neispravan parametar za PATH', 13, 10, 0
@@ -1028,6 +1072,8 @@ GreskaPisanja:                              ; Zajednicko za sve operacije koje i
         ver_string      db 'VER', 0
         cat_string      db 'CAT', 0
         type_string     db 'TYPE', 0
+		jobs_string     db 'JOBS', 0
+		fg_string       db 'FG', 0
         copy_string     db 'COPY', 0
         cp_string       db 'CP', 0
         ren_string      db 'REN', 0
