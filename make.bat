@@ -73,13 +73,13 @@ echo.
 echo Kopiram boot sektor ...
 pomocni\pb boot\bin\boot.bin
 echo Instaliram kernel  ....
-copy kernel\bin\kernel.bin a: > nul
+copy kernel\bin\kernel.bin b: > nul
 cd aplikacije\bin
   echo Kopiram aplikacije .... 
-  copy *.bin a: > nul
+  copy *.bin b: > nul
 cd ..
 cd demo
-  copy *.* a: > nul
+  copy *.* b: > nul
 cd ..\..
 
 echo.

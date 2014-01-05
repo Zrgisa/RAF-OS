@@ -50,6 +50,7 @@ repne	scasb
         mov	    bp, 3                       ; 3 pokusaja citanja
         mov	    cx, 0001h                   ; CH: cilindar (0-39), CL: pocetni sektor (1-9) 
         xor	    dx, dx                      ; DH: strana (0-1), DL: disk jedinica (0-3)
+		mov  	dl, 1
         mov	    bx, Original                ; ES:BX lokacija bafera
 
 CitajPonovo:
