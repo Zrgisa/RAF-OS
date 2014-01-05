@@ -36,7 +36,7 @@ _main:
         mov     bx, 0
         int     10h
         call    _seed_random                ; Seed za generator slucajnih brojeva 
-
+		call  	 _set_interrupts
         call    _clear_screen               ; Startovati komandni interpreter      
         call    _command_line
 
