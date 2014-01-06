@@ -120,23 +120,25 @@ novi_int08:									; Poziva stari int 08h pa zatim rutinu za stampanje
 		
 novi_int09:
 		pusha
-		in      al, KBD                          
-		mov	   [kbdata], al
-			
-		call ctrl_test
-			
-		cmp word [KBFLAGS], 0001h
-		jne .not_ctrl_z
-		cmp byte [kbdata] , Z_DOWN
-		jne .not_ctrl_z
+		in      al, KBD                     		; Citanje sken koda iz I/O registra tastature
+		cmp     al, Z_DOWN	            	; Poredjenje sken koda sa sken kodom tastera S 
+		jne     .not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
 		
-		;URADI NESTO
+        mov     ah, 02h                     		; Provera da li je pritisnut taster CTRL pomocu prekida 16h funkcija 02h.
+        int     16h                         			; U AL upisuje bajt koji predstavljaju flagove tastature (treci bit je za CTRL taster)
+        or      al, 11111011b               	; Da bi proverili treci bit, radimo logicko ili po bitovima i
+        cmp     al, 11111111b               	; ukoliko je rezultat 11111111 onda znamo da je pritisnut taster CTRL.
+        jne     .not_ctrl_z
+			;DEBUG
+				mov si,kura				; ispisuje se poruka da je pokrenut
+				call _print_string
 				
 	.not_ctrl_z:
 		mov     al, EOI                         
 		out	    Master_8259, al
-		popa
-			int 80h
+
+		int 80h
+		popa	
 	iret
 		
 novi_int10:									; int 10h ne menja flagove tako da ne moramo da ih azuriramo
@@ -220,35 +222,13 @@ novi_int1A:
 		mov		ax,	word [temp_ax]		
 		dec		byte [inBios]
 		iret
-;-------------------------------------------------------
-; proveravanje da li je pritisnut ctrl
-; ukoliko je ctrl pritisnut setuje flagove
-; ukoliko je ctrl optusten restujemo iste
-;-------------------------------------------------------
 
 
-ctrl_test:
-		pusha
-		cmp     al, LEFT_CTRL_DN                  
-		je      .left_ctrl_down                           
-		cmp     al, LEFT_CTRL_UP                  
-		je      .left_ctrl_up                                                
-		jmp     .is_not_ctrl                      
-	.left_ctrl_down:	
-		bts word [KBFLAGS], 0                   
-		jmp	    .is_ctrl				
-	.left_ctrl_up:	
-		btr word [KBFLAGS], 0               
-	.is_ctrl:	
-		xor     al, al                           
-	.is_not_ctrl:	
-		popa
-	ret
 	
 	
 
 
-inBios				db 0					; flag koji oznacava da li smo u BIOSu
+inBios					db 0					; flag koji oznacava da li smo u BIOSu
 temp_ax				dw 0
 temp_ip				dw 0
 temp_cs				dw 0
@@ -267,20 +247,9 @@ stari_int15_off		dw 0
 stari_int1A_seg		dw 0
 stari_int1A_off		dw 0		
 
-;-------------------------------------------------------
-; promenljive
-;-------------------------------------------------------
-LEFT_SHIFT_DN     			equ 02Ah 
-LEFT_SHIFT_UP     			equ 0AAh                   
-RIGHT_SHIFT_DN     		equ 036h
-RIGHT_SHIFT_UP     		equ 0B6h
-LEFT_CTRL_DN 	 			equ 1Dh
-LEFT_CTRL_UP 				equ 9Dh
-Z_DOWN 							equ 2Ch
-Z_UP 								equ 0ACh
-KBD            						equ 060h                     
-EOI            						equ 020h                     
-Master_8259    					equ 020h
-KBFLAGS:    		db 0
-kbdata: 				db 0
+Z_DOWN 				equ 2Ch
+KBD            			equ 060h                     
+EOI            			equ 020h                     
+Master_8259    		equ 020h
+
 kura         db 'kura', 13, 10, 0
