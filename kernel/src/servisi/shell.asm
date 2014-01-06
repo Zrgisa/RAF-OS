@@ -58,6 +58,7 @@ Ispisi_verziju:
         call    _print_string
 
 Komanda:
+		mov byte[is_shell] , 00h
         mov     si, prompt                  ; Glavna petlja. Prompt za unosenje komande.
         call    _print_string
 
@@ -204,6 +205,7 @@ Komanda:
 ; --------------------------------------------------------------------------
 		
 ProveriIzvrsnu:
+		mov 	byte[is_shell], 01h
 		mov		si, temp_input
         mov     di, input                   
 		call	_string_copy
@@ -362,7 +364,7 @@ NijeBin:
         mov     ax, es
         add     ax, app_seg - 10h           ; Od adrese segmenta oduzimamo 10h zbog COM PSP (to je 100h linearno)         
         mov     es, ax                
-        mov     ds, ax                
+        mov     ds, ax 
         call    app_start                   ; Poziv ucitanog programa 
         popa
         mov     ax, cs
@@ -1033,63 +1035,64 @@ GreskaPisanja:                              ; Zajednicko za sve operacije koje i
         jmp     Komanda 
 ; ------------------------------------------------------------------
 
-        tmp_string      times 15 db 0
-        arg0            times 32 db 0
-        Velicina        dw 0
+        tmp_string      	times 15 db 0
+        arg0            		times 32 db 0
+        Velicina        	dw 0
+		is_shell 			db 0, 0
+		
+        BinEkstenzija   	db 'BIN', 0
+        ComEkstenzija  db 'COM', 0
+        BatEkstenzija   	db 'BAT', 0
 
-        BinEkstenzija   db 'BIN', 0
-        ComEkstenzija   db 'COM', 0
-        BatEkstenzija   db 'BAT', 0
-
-        prompt          db 13,10,'RAF_OS>A:/', 0
+        prompt          	db 13,10,'RAF_OS>A:/', 0
 		dodatniProstor	times 256 db 0
-        HelpTekst       db 'Interne komande:',13,10,
-                        db 'DIR, TYPE, CLS, HELP, TIME, DATE, VER, COPY, REN, DEL, STOP, MD, RD, CD, PATH, ATTRIB, JOBS', 13, 10, 0
-        NePostoji       db 'Ne postoji takva komanda ili program', 13, 10, 0
+        HelpTekst       	db 'Interne komande:',13,10,
+								db 'DIR, TYPE, CLS, HELP, TIME, DATE, VER, COPY, REN, DEL, STOP, MD, RD, CD, PATH, ATTRIB, JOBS', 13, 10, 0
+        NePostoji       	db 'Ne postoji takva komanda ili program', 13, 10, 0
         NemaImena       db 'Nije zadato ime datoteke', 13, 10, 0
-        NemaImena1      db 'Nije zadato ime direktorijuma', 13, 10, 0
-        NemaImena2      db 'Nije zadato ime odredisne datoteke', 13, 10, 0
-        DatNePostoji    db 'Datoteka ne postoji', 13, 10, 0
-        VecPostoji      db 'Datoteka sa odredisnim imenom vec postoji', 13, 10, 0
-        DatPrevelika    db 'Izvorna datoteka je suvise velika (max 32KB)', 0
-        verzija         db 'RAF_OS', RAF_OS_VER, 13, 10, 0
-        pozdrav         db 13,10,'Dobrodosli u Trivijalni skolski operativni sistem: ',0
-		poruka          db 13,10,'Jobs',0
+        NemaImena1     db 'Nije zadato ime direktorijuma', 13, 10, 0
+        NemaImena2     db 'Nije zadato ime odredisne datoteke', 13, 10, 0
+        DatNePostoji    	db 'Datoteka ne postoji', 13, 10, 0
+        VecPostoji      	db 'Datoteka sa odredisnim imenom vec postoji', 13, 10, 0
+        DatPrevelika    	db 'Izvorna datoteka je suvise velika (max 32KB)', 0
+        verzija         		db 'RAF_OS', RAF_OS_VER, 13, 10, 0
+        pozdrav         	db 13,10,'Dobrodosli u Trivijalni skolski operativni sistem: ',0
+		poruka          	db 13,10,'Jobs',0
 		Greska_pisanja	db 'Greska upisivanja na disk', 13, 10, 0
-		Err_NP          db 'Zadata putanja ne postoji', 13, 10, 0
-        Err_NC          db 'Neispravan parametar za PATH', 13, 10, 0
-        Err_NE          db 'Direktorijum nije prazan', 13, 10, 0
-        Err_WP          db 'Neispravna putanja', 13, 10, 0
+		Err_NP          	db 'Zadata putanja ne postoji', 13, 10, 0
+        Err_NC          	db 'Neispravan parametar za PATH', 13, 10, 0
+        Err_NE          	db 'Direktorijum nije prazan', 13, 10, 0
+        Err_WP          	db 'Neispravna putanja', 13, 10, 0
         GreskaArgStr    db 'ATTRIB: Greska u argumentima.', 13, 10, 0
         
-        exit_string     db 'STOP', 0
-        help_string     db 'HELP', 0
-        cls_string      db 'CLS', 0
-        dir_string      db 'DIR', 0
-        ls_string       db 'LS', 0
-        time_string     db 'TIME', 0
-        date_string     db 'DATE', 0
-        ver_string      db 'VER', 0
-        cat_string      db 'CAT', 0
-        type_string     db 'TYPE', 0
-		jobs_string     db 'JOBS', 0
-		fg_string       db 'FG', 0
-        copy_string     db 'COPY', 0
-        cp_string       db 'CP', 0
-        ren_string      db 'REN', 0
-        del_string      db 'DEL', 0
-        rm_string       db 'RM', 0
+        exit_string     	db 'STOP', 0
+        help_string     	db 'HELP', 0
+        cls_string      	db 'CLS', 0
+        dir_string      		db 'DIR', 0
+        ls_string       		db 'LS', 0
+        time_string     	db 'TIME', 0
+        date_string     	db 'DATE', 0
+        ver_string      	db 'VER', 0
+        cat_string      	db 'CAT', 0
+        type_string     	db 'TYPE', 0
+		jobs_string     	db 'JOBS', 0
+		fg_string       		db 'FG', 0
+        copy_string     	db 'COPY', 0
+        cp_string       	db 'CP', 0
+        ren_string      	db 'REN', 0
+        del_string      	db 'DEL', 0
+        rm_string       	db 'RM', 0
 		md_string  		db 'MD', 0
-		cd_string		db 'CD', 0
-		rd_string		db 'RD', 0
-		a_string		db 'A:', 0
-		b_string		db 'B:', 0
+		cd_string			db 'CD', 0
+		rd_string			db 'RD', 0
+		a_string			db 'A:', 0
+		b_string			db 'B:', 0
 		path_string		db 'PATH', 0
-		attrib_string   db 'ATTRIB', 0
+		attrib_string   	db 'ATTRIB', 0
         
 		autoexec_string db 'AUTOEXEC.BAT', 0		
-        kern_string     db 'KERNEL.BIN', 0
-        NeMozeKernel    db 'Nije moguce izvrsavati datoteku kernela!', 13, 10, 0
+        kern_string     	db 'KERNEL.BIN', 0
+        NeMozeKernel   db 'Nije moguce izvrsavati datoteku kernela!', 13, 10, 0
 		
 		PathSpace		times 256 db 0
 		temp_input		times 128 db 0

@@ -129,9 +129,13 @@ novi_int09:
         or      al, 11111011b               	; Da bi proverili treci bit, radimo logicko ili po bitovima i
         cmp     al, 11111111b               	; ukoliko je rezultat 11111111 onda znamo da je pritisnut taster CTRL.
         jne     .not_ctrl_z
+			cmp byte[is_shell] , 00h
+			je .not_ctrl_z
 			;DEBUG
-				mov si,kura				; ispisuje se poruka da je pokrenut
-				call _print_string
+				;'mov si,is_shell				; ispisuje se poruka da je pokrenut
+				;call _print_string
+				call _clear_screen
+				jmp Komanda
 				
 	.not_ctrl_z:
 		mov     al, EOI                         
