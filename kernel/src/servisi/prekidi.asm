@@ -119,7 +119,7 @@ novi_int08:									; Poziva stari int 08h pa zatim rutinu za stampanje
 		iret
 		
 novi_int09:
-		pusha
+
 		in      al, KBD                     		; Citanje sken koda iz I/O registra tastature
 		cmp     al, Z_DOWN	            	; Poredjenje sken koda sa sken kodom tastera S 
 		jne     .not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
@@ -128,21 +128,28 @@ novi_int09:
         int     16h                         			; U AL upisuje bajt koji predstavljaju flagove tastature (treci bit je za CTRL taster)
         or      al, 11111011b               	; Da bi proverili treci bit, radimo logicko ili po bitovima i
         cmp     al, 11111111b               	; ukoliko je rezultat 11111111 onda znamo da je pritisnut taster CTRL.
+	
         jne     .not_ctrl_z
 			cmp byte[is_shell] , 00h
 			je .not_ctrl_z
 			;DEBUG
-				;'mov si,is_shell				; ispisuje se poruka da je pokrenut
+				;mov si,is_shell				; ispisuje se poruka da je pokrenut
 				;call _print_string
 				call _clear_screen
-				jmp Komanda
+				mov		word [temp_ax], ax
+				pop		ax
+				pop	 	ax
+				mov      ax,  [shell_cs]
+				push ax
+				mov 		ax, 	pomocna
+				push     ax
+				mov 		ax, word[temp_ax]
 				
 	.not_ctrl_z:
 		mov     al, EOI                         
 		out	    Master_8259, al
 
 		int 80h
-		popa	
 	iret
 		
 novi_int10:									; int 10h ne menja flagove tako da ne moramo da ih azuriramo
