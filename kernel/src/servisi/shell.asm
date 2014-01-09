@@ -276,10 +276,14 @@ PunoIme:
         mov     di, BinEkstenzija           ; Da li je 'BIN'?
         call    _string_compare
         jnc     ComDatoteka
-		;mov word[shell_sp] , sp
+		;push bp
+		;push sp
+		;pop bp
+		;mov word[shell_sp] , bp
+		;pop bp
 		mov 	byte[is_shell], 01h
         call    app_start                   ; Poziv ucitanog programa
-pomocna:		
+pomocna1:		
 		mov		ax, (prompt+9)              ; Path pocetak
 		call	_change_folder_path
 		mov word [tempBrojac], 0
@@ -305,10 +309,15 @@ ComDatoteka:
         add     ax, app_seg - 10h           ; Od adrese segmenta oduzimamo 10h zbog COM PSP (to je 100h linearno)         
         mov     es, ax                
         mov     ds, ax
-		;mov word[shell_sp] , sp
+		;push bp
+		;push sp
+		;pop bp
+		;mov word[shell_sp] , bp
+		;pop bp
 		mov 	byte[is_shell], 02h		
         call    app_start                   ; Poziv ucitanog programa 
-        popa
+pomocna2:	
+		popa
         mov     ax, cs
         mov     es, ax
         mov     ds, ax
@@ -336,9 +345,14 @@ BatDatoteka:
 
         mov     ax, app_start               ; Ako jeste, pocetak programa 
         mov word bx, [Velicina]             ; i njegova velicina u memoriji 
-		;mov word[shell_sp] , sp
+		;push bp
+		;push sp
+		;pop bp
+		;mov word[shell_sp] , bp
+		;pop bp
 		mov 	byte[is_shell], 03h
         call    _run_batch                  ; prosledjuju se skript interpreteru
+pomocna3:		
 		mov		ax, (prompt+9)              ; Path pocetak
 		call	_change_folder_path
 		mov word [tempBrojac], 0
@@ -374,10 +388,15 @@ NijeBin:
         add     ax, app_seg - 10h           ; Od adrese segmenta oduzimamo 10h zbog COM PSP (to je 100h linearno)         
         mov     es, ax                
         mov     ds, ax 
-		;mov word[shell_sp] , sp
+		;push bp
+		;push sp
+		;pop bp
+		;mov word[shell_sp] , bp
+		;pop bp
 		mov 	byte[is_shell], 04h
         call    app_start                   ; Poziv ucitanog programa
-        popa
+pomocna4:	        
+		popa
         mov     ax, cs
         mov     es, ax
         mov     ds, ax
@@ -410,11 +429,16 @@ NijeCom:
 		clc
         call    _load_file_current_folder
         jc      ProveriPath                 ; Preskoci ako se dogodila greska pri ucitavanju datoteke
-		;mov word[shell_sp] , sp
+		push bp
+		push sp
+		pop bp
+		mov word[shell_sp] , bp
+		pop bp
 		mov 	byte[is_shell], 05h
         mov     ax, app_start               ; Adresa skript teksta
         mov word bx, [Velicina]             ; Velicina teksta
         call    _run_batch                  ; Poziv interpretera
+pomocna5:	
 		mov		ax, (prompt+9)              ; Path pocetak
 		call	_change_folder_path
 		mov word [tempBrojac], 0

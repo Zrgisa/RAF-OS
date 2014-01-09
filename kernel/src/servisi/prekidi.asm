@@ -122,30 +122,58 @@ novi_int09:
 
 		in      al, KBD                     		; Citanje sken koda iz I/O registra tastature
 		cmp     al, Z_DOWN	            	; Poredjenje sken koda sa sken kodom tastera S 
-		jne     .not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
+		jne     not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
 		
         mov     ah, 02h                     		; Provera da li je pritisnut taster CTRL pomocu prekida 16h funkcija 02h.
         int     16h                         			; U AL upisuje bajt koji predstavljaju flagove tastature (treci bit je za CTRL taster)
         or      al, 11111011b               	; Da bi proverili treci bit, radimo logicko ili po bitovima i
         cmp     al, 11111111b               	; ukoliko je rezultat 11111111 onda znamo da je pritisnut taster CTRL.
 	
-        jne     .not_ctrl_z
+        jne     not_ctrl_z
 			cmp byte[is_shell] , 00h
-			je .not_ctrl_z
+			je not_ctrl_z
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
 				;call _print_string
 				call _clear_screen
+				
 				mov		word [temp_ax], ax
 				pop		ax
 				pop	 	ax
 				mov      ax,  [shell_cs]
 				push ax
-				mov 		ax, 	pomocna
+				
+			pom1:
+				cmp byte[is_shell] , 01h
+				jne pom2
+				mov 		ax, 	pomocna1
 				push     ax
+				jmp back_ax
+			pom2:
+				cmp byte[is_shell] , 02h
+				jne pom3
+				mov 		ax, 	pomocna2
+				push     ax
+				jmp back_ax
+			pom3:
+				cmp byte[is_shell] , 03h
+				jne pom4
+				mov 		ax, 	pomocna3
+				push     ax
+				jmp back_ax
+			pom4:
+				cmp byte[is_shell] , 04h
+				jne pom5
+				mov 		ax, 	pomocna4
+				push     ax
+				jmp back_ax
+			pom5:
+				mov 		ax, 	pomocna5
+				push     ax
+		back_ax:	
 				mov 		ax, word[temp_ax]
 				
-	.not_ctrl_z:
+	not_ctrl_z:
 		mov     al, EOI                         
 		out	    Master_8259, al
 
