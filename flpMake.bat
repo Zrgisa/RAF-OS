@@ -3,12 +3,12 @@ cd RAF_OS
 cd vfd
 vfd INSTALL
 vfd START
-vfd OPEN 1: D:\RAF_OS\raf_os.flp /W 
+vfd LINK 1 B
+vfd OPEN B: D:\RAF_OS\raf_os.flp /W 
 cd ..
-pause
 call make.bat
 cd vfd
-vfd SAVE 1:
-vfd CLOSE 1:
+vfd SAVE B:
+vfd CLOSE B:
+vfd ULINK 1
 vfd STOP
-pause
