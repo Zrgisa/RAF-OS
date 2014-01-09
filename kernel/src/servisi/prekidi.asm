@@ -132,14 +132,26 @@ novi_int09:
         jne     not_ctrl_z
 			cmp byte[is_shell] , 00h
 			je not_ctrl_z
+				mov byte[is_shell] , 00h
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
 				;call _print_string
 				call _clear_screen
 				
 				mov		word [temp_ax], ax
+				mov		word [temp_bx], bx
+				
 				pop		ax
 				pop	 	ax
+				pop		ax
+			petlja:
+					cmp word[shell_sp], sp
+					je nastav
+					pop bx
+					jmp petlja
+					
+			nastav:	
+				push ax
 				mov      ax,  [shell_cs]
 				push ax
 				
@@ -170,7 +182,8 @@ novi_int09:
 			pom5:
 				mov 		ax, 	pomocna5
 				push     ax
-		back_ax:	
+		back_ax:
+				mov		 bx, word [temp_bx]		
 				mov 		ax, word[temp_ax]
 				
 	not_ctrl_z:
@@ -269,6 +282,7 @@ novi_int1A:
 
 inBios					db 0					; flag koji oznacava da li smo u BIOSu
 temp_ax				dw 0
+temp_bx				dw 0
 temp_ip				dw 0
 temp_cs				dw 0
 stari_int08_seg		dw 0
