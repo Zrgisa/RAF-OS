@@ -57,6 +57,8 @@ Ispisi_verziju:
         call    _print_string
         mov     si, verzija
         call    _print_string
+		
+		call delete_savs
 
 Komanda:
 		 
