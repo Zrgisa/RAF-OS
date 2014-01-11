@@ -133,58 +133,52 @@ novi_int09:
 			cmp byte[is_shell] , 00h
 			je not_ctrl_z
 				mov byte[is_shell] , 00h
+
+					mov     ax, temp_proc
+					call    _string_length
+					mov     si, temp_proc
+					add     si, ax  
+					
+					inc word[sus_proc] 
+					
+					mov ax, word[sus_proc]
+					cmp ax, 9
+					jg preskoci
+					mov byte [si], '0'
+					mov byte[si+1], 0
+					; ax bx cx
+				preskoci:	
+					call _int_to_string
+					mov bx, ax
+					mov ax, temp_proc
+					mov cx, make_proc
+					call _string_join
+					
+					mov     ax, make_proc
+					call    _string_length
+					mov     si, make_proc
+					add     si, ax
+				               
+					;sub     si, 4                       ; Treba oduzeti 4 znaka jer smo prethodno dodali .BIN 
+
+					mov byte [si], '.'                  ; Dodati ekstenziju .BAT ?
+					mov byte [si+1], 'S'
+					mov byte [si+2], 'A'
+					mov byte [si+3], 'V'
+					mov byte [si+4], 0
+					
+					mov bx, temp_proc_name
+					mov ax, temp_proc
+					call _string_length
+					mov cx, ax
+					mov ax, make_proc
+					call _write_file
+					
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
 				;call _print_string
-				call _clear_screen
-				
-				mov		word [temp_ax], ax
-				mov		word [temp_bx], bx
-				
-				pop		ax
-				pop	 	ax
-				pop		ax
-			petlja:
-					cmp word[shell_sp], sp
-					je nastav
-					pop bx
-					jmp petlja
 					
-			nastav:	
-				push ax
-				mov      ax,  [shell_cs]
-				push ax
-				
-			pom1:
-				cmp byte[is_shell] , 01h
-				jne pom2
-				mov 		ax, 	pomocna1
-				push     ax
-				jmp back_ax
-			pom2:
-				cmp byte[is_shell] , 02h
-				jne pom3
-				mov 		ax, 	pomocna2
-				push     ax
-				jmp back_ax
-			pom3:
-				cmp byte[is_shell] , 03h
-				jne pom4
-				mov 		ax, 	pomocna3
-				push     ax
-				jmp back_ax
-			pom4:
-				cmp byte[is_shell] , 04h
-				jne pom5
-				mov 		ax, 	pomocna4
-				push     ax
-				jmp back_ax
-			pom5:
-				mov 		ax, 	pomocna5
-				push     ax
-		back_ax:
-				mov		 bx, word [temp_bx]		
-				mov 		ax, word[temp_ax]
+				jmp jump_proc
 				
 	not_ctrl_z:
 		mov     al, EOI                         
@@ -275,7 +269,57 @@ novi_int1A:
 		dec		byte [inBios]
 		iret
 
-
+jump_proc:
+call _clear_screen
+call _show_cursor				
+				mov		word [temp_ax], ax
+				mov		word [temp_bx], bx
+				
+				pop		ax
+				pop	 	ax
+				pop		ax
+			petlja:
+					cmp word[shell_sp], sp
+					je nastav
+					pop bx
+					jmp petlja
+					
+			nastav:	
+				push ax
+				mov      ax,  [shell_cs]
+				push ax
+				
+			pom1:
+				cmp byte[is_shell] , 01h
+				jne pom2
+				mov 		ax, 	pomocna1
+				push     ax
+				jmp back_ax
+			pom2:
+				cmp byte[is_shell] , 02h
+				jne pom3
+				mov 		ax, 	pomocna2
+				push     ax
+				jmp back_ax
+			pom3:
+				cmp byte[is_shell] , 03h
+				jne pom4
+				mov 		ax, 	pomocna3
+				push     ax
+				jmp back_ax
+			pom4:
+				cmp byte[is_shell] , 04h
+				jne pom5
+				mov 		ax, 	pomocna4
+				push     ax
+				jmp back_ax
+			pom5:
+				mov 		ax, 	pomocna5
+				push     ax
+		back_ax:
+				mov		 bx, word [temp_bx]		
+				mov 		ax, word[temp_ax]
+jmp not_ctrl_z
 	
 	
 

@@ -203,9 +203,9 @@ Komanda:
 		jc near path
         
 ; --------------------------------------------------------------------------
-; Ako korisnik nije zadao nijednu od prethodnih internih komandi, potrebno 
-; je proveriti da li na disku postoji izvrsna datoteka (.BIN) sa tim imenom
-; --------------------------------------------------------------------------
+; Ako korisnik nije zadao nijednu od prethodnih internih k sa tim imenom
+; --------------------------------------------------------------------------omandi, potrebno 
+; je proveriti da li na disku postoji izvrsna datoteka (.BIN)
 		
 ProveriIzvrsnu:
 		mov		si, temp_input
@@ -276,9 +276,18 @@ PunoIme:
         call    _string_compare
         jnc     ComDatoteka
 
+		push	si
+		push	di
+		mov		si, input
+		mov		di, temp_proc
+		call	_string_copy
+		pop 	di
+		pop		si
 		
-		mov 	byte[is_shell], 01h
-		mov word[shell_sp] , sp
+		push ax
+		mov ax, 01h
+		call processPrepare
+		pop ax
 		
         call    app_start                   ; Poziv ucitanog programa
 pomocna1:		
@@ -308,8 +317,11 @@ ComDatoteka:
         add     ax, app_seg - 10h           ; Od adrese segmenta oduzimamo 10h zbog COM PSP (to je 100h linearno)         
         mov     es, ax
 
-		mov word[shell_sp] , sp
-		mov 	byte[is_shell], 02h		
+		push ax
+		mov ax, 02h
+		call processPrepare
+		pop ax
+		
         call    app_start                   ; Poziv ucitanog programa 
 pomocna2:	
 		popa
@@ -321,6 +333,8 @@ pomocna2:
 		mov word [tempBrojac], 0
         jmp     Komanda                     ; Po izlasku iz COM, ponovo prompt.
                
+			   
+
 ; --------------------------------------------------------
 ; Proveravamo da li je ucitana datoteka tekst skript
 ; Ukoliko jeste, potrebno je startovati BAT interpreter
@@ -341,8 +355,10 @@ BatDatoteka:
         mov     ax, app_start               ; Ako jeste, pocetak programa 
         mov word bx, [Velicina]             ; i njegova velicina u memoriji 
 		
-		mov 	byte[is_shell], 03h
-		mov word[shell_sp] , sp
+		push ax
+		mov ax, 03h
+		call processPrepare
+		pop ax
 		
         call    _run_batch                  ; prosledjuju se skript interpreteru
 pomocna3:		
@@ -384,8 +400,11 @@ NijeBin:
         mov     es, ax                
         mov     ds, ax
 		
-		mov 	byte[is_shell], 04h
-		mov word[shell_sp] , sp
+		push ax
+		mov ax, 04h
+		call processPrepare
+		pop ax
+		
         call    app_start                   ; Poziv ucitanog programa
 pomocna4:	        
 		popa
@@ -422,8 +441,11 @@ NijeCom:
         call    _load_file_current_folder
         jc      ProveriPath                 ; Preskoci ako se dogodila greska pri ucitavanju datoteke
 		
-		mov word[shell_sp] , sp
-		mov 	byte[is_shell], 05h
+		
+		push ax
+		mov ax, 05h
+		call processPrepare
+		pop ax
 		
         mov     ax, app_start               ; Adresa skript teksta
         mov word bx, [Velicina]             ; Velicina teksta
@@ -1011,13 +1033,44 @@ path:
         
 	.tz    db ';', 0
 	.clear db 'CLEAR', 0
+; ------------------------------------------------------------------
+;delete_savs:
+;		pusha
+;		mov     bx, app_start
+ ;      call    _get_sav
+;		mov   si, app_start
+;.proveri_kraj:
+;		mov al, [si]
+;		cmp al, 0
+;		je kraj
+;.sledeceslovo:
+;		mov di, .currentSav
+;		mov al, [si]
+;		
+;.kraj:
+;		popa
+;		ret
+		
+;		.currentSav times 20 db 0
 ; ------------------------------------------------------------------	
 suspended:
-	;DEBUG
-	;mov     si, poruka
-    ;call    _print_string
+		mov 	si, input
+		call _string_parse
+		
+        mov		si, .Naslov1
+		call	_print_string
+		mov		si, .CrLf1
+		call	_print_string
+			
+		mov     bx, app_start               ; Bafer gde se smesta sadrzaj direktorijuma
+        call    _get_sav        
+        mov     si, app_start               ; Ispisi sadrzaj bafera
+        call    _print_string	
+        jmp     Komanda
 
 	jmp Komanda
+	.Naslov1 db 13,10, ' Procesi koji se mogu odsuspendovati: ', 0
+	.CrLf1   db  13, 10, 10, 0
 ; ------------------------------------------------------------------
 unsuspended:
 	mov 	si, input
@@ -1044,6 +1097,7 @@ unsuspended:
 		;call    _print_string
 	
 	jmp Komanda
+	
 ; ------------------------------------------------------------------
 exit:
         ret
@@ -1060,14 +1114,32 @@ GreskaPisanja:                              ; Zajednicko za sve operacije koje i
 		call	_print_string
         jmp     Komanda 
 ; ------------------------------------------------------------------
+processPrepare:
+	mov word[is_shell], ax
+	push	si
+	push	di
+	mov		si, input
+	mov		di, temp_proc
+	call	_string_copy
+	mov		di, temp_proc_name
+	call	_string_copy
+	pop 	di
+	pop		si
+	mov word[shell_sp] , sp		
+	ret
+;---------------------------------------------------------------------
 
         tmp_string      	times 15 db 0
         arg0            		times 32 db 0
         Velicina        	dw 0
-		is_shell 			db 0, 0
+		is_shell 			dw 0
 		shell_cs			dw 0
 		shell_ip				dw 0
 		shell_sp			dw 0
+		sus_proc			dw 0
+		temp_proc			times 128 db 0
+		temp_proc_name times 128 db 0
+		make_proc		times 128 db 0
 		
         BinEkstenzija   	db 'BIN', 0
         ComEkstenzija  db 'COM', 0

@@ -365,7 +365,211 @@ _get_dir:
 
 	fajl db 0
 
+ ;-------------------------------------------------------------
+; _list_sav - Nalazenje sav fajlova
+;  Ulaz BX - tu se smesta
+;-------------------------------------------------------------
+_list_sav:
+        pusha
+        call    UcitajCurrentFolder         ; Ucitavamo potreban broj stavki u bafer
+        mov     si, DiskBafer
+        mov     di, bx
+        
+.PocetakStavke:
+        mov     al, [si+11]                 ; Provera atributa
+        cmp     al, 0Fh                     ; Marker za 255 UTF-16 znakova u imenu?
+        je near .Preskoci                    
+        test    al, 02h                     ; Hidden attribute?  
+        jnz near .Preskoci  
+        test    al, 10h                     ; Direktorijumska stavka?
+        jnz near .Preskoci
+        
+.Nastavak:
+        test    al, 08h                     ; Naziv volumena ?
+        jnz near .Preskoci                                    
+        mov     al, [si]
+        cmp     al, 0E5h                    ; Obrisana stavka?
+        je near .Preskoci
+        cmp     al, 0                       ; Prvi bajt = 0. Stavka nikada nije koriscena.
+        je near .Kraj
+        mov     cx, 1                       ; Brojac znakova
+        mov     dx, si                      ; Cuvamo pocetak stavke
+
+.TestirajStavku:
+        inc     si
+        mov     al, [si]                    ; Ispitujemo neupotrebljive znakove
+        cmp     al, ' '                     ; Windows nekada stavlja 0 (UTF-8) ili 0FFh
+        jl near .SledecaStavka              ; Preskoci ako je ASCII kod manji od 32
+        cmp     al, '~'
+        ja near .SledecaStavka              ; Preskoci ako je ASCII kod veci od 126
+        inc     cx
+		cmp     cx, 8                       
+        je     .ProveriSav
+        cmp     cx, 11                      ; Zavrsili smo sa 11 znakova za ime datoteke?
+        je     .ImeDatoteke
+        jmp    .TestirajStavku
+
+.ProveriSav:
+		mov     al, [si + 1]
+		cmp al, 'S'
+		jne near .SledecaStavka
+		mov     al, [si + 2]
+		cmp al, 'A'
+		jne near .SledecaStavka
+		mov     al, [si + 3]
+		cmp al, 'V'
+		jne near .SledecaStavka
+        jmp    .TestirajStavku
+		
+.ImeDatoteke:                               
+        mov     si, dx                      ; Vracamo pointer na ime datoteke     
+        mov     cx, 0
+        
+.Ponavljaj:
+        mov byte al, [si]
+        cmp     al, ' '                    
+        je     .PreskociPrazno
+        mov byte [di], al
+        inc     si
+        inc     di
+        inc     cx
+        cmp     cx, 8                       
+        je     .DodajTacku
+        cmp     cx, 11
+        je near .DodajNoviRed
+        jmp    .Ponavljaj
+
+.PreskociPrazno:
+        inc     si                          ; Preskacemo prazna mesta u imenu u FAT12
+        inc     cx
+        cmp     cx, 8
+        je     .DodajTacku
+        cmp     cx, 11                      ; Za slucaj da se prazna mesta nalaze i u ekstenziji, npr. PROG.C
+        je near .DodajNoviRed
+        jmp    .Ponavljaj
+		
+.DodajTacku:
+        mov byte [di], '.'                  ; Posle 8 znakova (sa praznim mestima), dodajemo tacku
+        inc     di
+        jmp    .Ponavljaj
  
+.DodajNoviRed
+        mov byte [di], 10
+        inc     di
+  
+.SledecaStavka:
+        mov     si, dx                      ; Vracamo se na pocetak direktorijumske stavke
+.Preskoci:
+        add     si, 32                      ; Pomeramo pointer na pocetak sledece stavke (32 bajta unapred)
+        jmp    .PocetakStavke
+.Kraj:
+        mov byte [di], 0
+        popa
+        ret
+	
+ ;-------------------------------------------------------------
+; _get_sav - Nalazenje sav fajlova
+;  Ulaz BX - tu se smesta
+;-------------------------------------------------------------
+_get_sav:
+        pusha
+        call    UcitajCurrentFolder         ; Ucitavamo potreban broj stavki u bafer
+        mov     si, DiskBafer
+        mov     di, bx
+        
+.PocetakStavke:
+        mov     al, [si+11]                 ; Provera atributa
+        cmp     al, 0Fh                     ; Marker za 255 UTF-16 znakova u imenu?
+        je near .Preskoci                    
+        test    al, 02h                     ; Hidden attribute?  
+        jnz near .Preskoci  
+        test    al, 10h                     ; Direktorijumska stavka?
+        jnz near .Preskoci
+        
+.Nastavak:
+        test    al, 08h                     ; Naziv volumena ?
+        jnz near .Preskoci                                    
+        mov     al, [si]
+        cmp     al, 0E5h                    ; Obrisana stavka?
+        je near .Preskoci
+        cmp     al, 0                       ; Prvi bajt = 0. Stavka nikada nije koriscena.
+        je near .Kraj
+        mov     cx, 1                       ; Brojac znakova
+        mov     dx, si                      ; Cuvamo pocetak stavke
+
+.TestirajStavku:
+        inc     si
+        mov     al, [si]                    ; Ispitujemo neupotrebljive znakove
+        cmp     al, ' '                     ; Windows nekada stavlja 0 (UTF-8) ili 0FFh
+        jl near .SledecaStavka              ; Preskoci ako je ASCII kod manji od 32
+        cmp     al, '~'
+        ja near .SledecaStavka              ; Preskoci ako je ASCII kod veci od 126
+        inc     cx
+		cmp     cx, 8                       
+        je     .ProveriSav
+        cmp     cx, 11                      ; Zavrsili smo sa 11 znakova za ime datoteke?
+        je     .ImeDatoteke
+        jmp    .TestirajStavku
+
+.ProveriSav:
+		mov     al, [si + 1]
+		cmp al, 'S'
+		jne near .SledecaStavka
+		mov     al, [si + 2]
+		cmp al, 'A'
+		jne near .SledecaStavka
+		mov     al, [si + 3]
+		cmp al, 'V'
+		jne near .SledecaStavka
+        jmp    .TestirajStavku
+		
+.ImeDatoteke:                               
+        mov     si, dx                      ; Vracamo pointer na ime datoteke     
+        mov     cx, 0
+		mov byte [di], ' '
+        inc     di
+		mov byte [di], ' '
+        inc     di
+        
+.Ponavljaj:
+        mov byte al, [si]
+        cmp     al, ' '                    
+        je     .PreskociPrazno
+        mov byte [di], al
+        inc     si
+        inc     di
+        inc     cx
+        cmp     cx, 8                       
+        je     .DodajNoviRed
+        cmp     cx, 11
+        je near .DodajNoviRed
+        jmp    .Ponavljaj
+
+.PreskociPrazno:
+        inc     si                          ; Preskacemo prazna mesta u imenu u FAT12
+        inc     cx
+        cmp     cx, 8
+        je     .DodajNoviRed
+        cmp     cx, 11                      ; Za slucaj da se prazna mesta nalaze i u ekstenziji, npr. PROG.C
+        je near .DodajNoviRed
+        jmp    .Ponavljaj
+ 
+.DodajNoviRed
+        mov byte [di], 13                   ; Novi red
+        inc     di
+        mov byte [di], 10
+        inc     di
+  
+.SledecaStavka:
+        mov     si, dx                      ; Vracamo se na pocetak direktorijumske stavke
+.Preskoci:
+        add     si, 32                      ; Pomeramo pointer na pocetak sledece stavke (32 bajta unapred)
+        jmp    .PocetakStavke
+.Kraj:
+        mov byte [di], 0
+        popa
+        ret
+
 ;-------------------------------------------------------------
 ; _change_attrib -- Izmena attributa datoteke
 ; Atributi se setuju komandom +R/S/H aresetuju komandom -R/S/H
