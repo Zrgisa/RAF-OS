@@ -1035,7 +1035,55 @@ path:
 	.tz    db ';', 0
 	.clear db 'CLEAR', 0
 ; ------------------------------------------------------------------
+delete_savs:
+		pusha
+		mov si, .delStr
+		call _print_string
+		
+		mov     bx, app_start
+        call _list_sav
+		mov   si, app_start
+		mov cx, 0
+.savProveriKraj:
+		mov al, byte[si]
+		cmp al, 0
+		je .savsKraj
+		mov di, .currentSav
+.savSlovo:
+		mov al, byte[si]
+		inc si
+		cmp al, 10
+		je .savsObrisi
+		mov byte[di]. al
+		inc di
+		jmp .savSlovo
 
+.savsObrisi:
+		mov byte[di], 0
+		push si
+		mov si, .currentSav
+		call _print_string
+		
+		mov		si, .CrLf1
+		call	_print_string
+		pop si
+		add cx, 4
+		mov ax, .currentSav
+		pusha
+		call _remove_file
+		popa
+		jmp .savProveriKraj
+		
+.savsKraj:
+		mov si, .delEnd
+		call _print_string
+		popa
+		ret
+		
+		.currentSav times 20 db 0
+		.CrLf1   db  13, 10, 0
+		.delStr db 13, 10, 'Obrisana stanja:', 13, 10, 0
+		.delEnd db '-----------------------', 0
 ; ------------------------------------------------------------------	
 suspended:
 		mov 	si, input
