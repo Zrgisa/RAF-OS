@@ -57,7 +57,6 @@ Ispisi_verziju:
         call    _print_string
         mov     si, verzija
         call    _print_string
-		call delete_savs
 
 Komanda:
 		 
@@ -1113,47 +1112,7 @@ processPrepare:
 	mov word[shell_sp] , sp		
 	ret
 ;---------------------------------------------------------------------
-delete_savs:
-		pusha
-		xor cx,cx
-		mov     bx, app_start
-		call    _get_sav
-		mov   si, app_start
-		call 	_print_string
-.Sledeci		
-        mov     bx, si 
-.Sledeci1:
-		                     ; BX = pocetak prvog podstringa
-		
-		mov al, byte[si]
-		inc si
-		
-        cmp     al, 0                       ; Kraj stringa?
-        je     .Izlaz
-		
-        cmp     al, ' '                 	 ; preskacem ova sranja msm nisu mi bitna   
-		je .jmpH						; i ako pokusa da obrise " .SAV" nece je naci i nista
-		cmp     al, 13                    ; tako da ovo moze da izgeda ovako
-        je .jmpH
-		cmp     al, 10                    
-        je .jmpH
-		
-		jmp .Sledeci1
-.jmpH:		
-        dec     si
-        mov byte [si], 0                    ; Ako je prazno mesto, zavrsi podstring nulom
-		
-		push si
-		mov si,Greska_pisanja
-		call _print_string
-		pop si
-		
-		jmp .Sledeci
-		
-.Izlaz: 
-		popa
-		ret
-;---------------------------------------------------------------------
+
         tmp_string      	times 15 db 0
         arg0            		times 32 db 0
         Velicina        	dw 0
@@ -1164,6 +1123,7 @@ delete_savs:
 		sus_proc			dw 0
 		temp_proc			times 128 db 0
 		temp_proc_name times 128 db 0
+		temp_write times 128 db 0
 	    .currentSav times 20 db 0
 		make_proc		times 128 db 0
 		

@@ -134,6 +134,9 @@ novi_int09:
 			je not_ctrl_z
 				mov byte[is_shell] , 00h
 
+				
+				jmp jump_proc
+			ctrl_z:	
 					mov     ax, temp_proc
 					call    _string_length
 					mov     si, temp_proc
@@ -167,7 +170,7 @@ novi_int09:
 					mov byte [si+3], 'V'
 					mov byte [si+4], 0
 					
-					mov bx, temp_proc_name
+					mov bx, stack_buffer
 					mov ax, temp_proc
 					call _string_length
 					mov cx, ax
@@ -178,7 +181,7 @@ novi_int09:
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
 				;call _print_string
 					
-				jmp jump_proc
+				
 				
 	not_ctrl_z:
 		mov     al, EOI                         
@@ -274,17 +277,25 @@ call _clear_screen
 call _show_cursor				
 				mov		word [temp_ax], ax
 				mov		word [temp_bx], bx
+				mov		word [temp_cx], bx
 				
 				pop		ax
 				pop	 	ax
 				pop		ax
+				xor cl,cl
+				mov si, stack_buffer
 			petlja:
 					cmp word[shell_sp], sp
 					je nastav
 					pop bx
+					mov byte[si], bl
+					inc si
+					mov byte[si], bh
+					inc si
 					jmp petlja
 					
-			nastav:	
+			nastav:
+				mov byte[si], 0
 				push ax
 				mov      ax,  [shell_cs]
 				push ax
@@ -317,15 +328,17 @@ call _show_cursor
 				mov 		ax, 	pomocna5
 				push     ax
 		back_ax:
-				mov		 bx, word [temp_bx]		
+				mov		bx, word[temp_bx]		
 				mov 		ax, word[temp_ax]
-jmp not_ctrl_z
+				mov 		cx, word[temp_cx]
+jmp ctrl_z
 	
 	
 
 
 inBios					db 0					; flag koji oznacava da li smo u BIOSu
 temp_ax				dw 0
+temp_cx				dw 0
 temp_bx				dw 0
 temp_ip				dw 0
 temp_cs				dw 0
@@ -349,4 +362,5 @@ KBD            			equ 060h
 EOI            			equ 020h                     
 Master_8259    		equ 020h
 
+stack_buffer times 128 db 0
 kura         db 'kura', 13, 10, 0
