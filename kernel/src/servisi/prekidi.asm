@@ -412,38 +412,40 @@ make_files:
 ret	
 
 set_vm_buffer:
-      pusha
-      mov  ah,02h		; BIOS 10h: ah = 02h (Postavljanje pozicije kursora)
-      mov  dh,0h		; dl - kolona, dh - red
-      mov  dl,0h		; Pozicija 0,0 (pocetak ekrana - gornji levi ugao)
-      int  10h			; BIOS prekid za rad sa ekranom
-      xor  cx,cx		; Resetovati brojac znakova na vrednost 0
-	  mov si, process_vm
-.loop:
-      mov ah, 08h		; Ispisivati prazno mesto
-      int 10h
-	  mov word[si], ax
-	  add si, 2
-	  
-	  call    _get_cursor_pos             ; Da li je u pitanju poslednja kolona u liniji?
-      cmp     dl, 79
-	  jne .preskoci
-	  mov dl, 0
-	  inc dh
-	  call _move_cursor
-	  jmp .nastavi
-.preskoci:
-		inc dl
-		call _move_cursor
-.nastavi:
-	  inc  cx
-      cmp  cx,2000		; Standardna velicina alfanumerickog ekrana 80x25 (2000 znakova)
-      jne  .loop
+    pusha
+	mov si, process_vm
+	
+	mov dh, 0
+	
+.vmKolone:
+	call .vmIspisiRed
+	inc dh
+	cmp dh, 25
+	jne .vmKolone
+	jmp .vmKraj
 
-      popa
-      ret
+.vmIspisiRed:
+	mov dl, 0
+	
+.vmSledeci:
+	call _move_cursor
+    
+	mov bh, 0h
+	mov ah, 08h		; Ispisivati prazno mesto
+    int 10h
+	mov word[si], ax
+	add si, 2
+	
+	inc dl
+	cmp dl, 80
+	jne .vmSledeci
+	
+	ret
+	
+.vmKraj:
+    popa
+    ret
 
-	  
 	
 process_file_pme  	times 20 db 0
 process_file_sav  	times 20 db 0
