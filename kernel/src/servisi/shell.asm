@@ -1155,7 +1155,7 @@ processPrepare:
 	mov		si, input
 	mov		di, temp_proc
 	call	_string_copy
-	mov		di, temp_proc_name
+	mov		di, process_name
 	call	_string_copy
 	pop 	di
 	pop		si
@@ -1170,11 +1170,11 @@ processPrepare:
 		shell_cs			dw 0
 		shell_ip				dw 0
 		shell_sp			dw 0
-		sus_proc			dw 0
-		temp_proc			times 128 db 0
-		temp_proc_name times 128 db 0
-		temp_write times 128 db 0
-	    .currentSav times 20 db 0
+		process_number			dw 0
+		temp_proc			times 20 db 0
+		process_name   times 20 db 0
+		temp_write 		times 20 db 0
+	    .currentSav		times 20 db 0
 		make_proc		times 128 db 0
 		
         BinEkstenzija   	db 'BIN', 0

@@ -137,45 +137,8 @@ novi_int09:
 				
 				jmp jump_proc
 			ctrl_z:	
-					mov     ax, temp_proc
-					call    _string_length
-					mov     si, temp_proc
-					add     si, ax  
-					
-					inc word[sus_proc] 
-					
-					mov ax, word[sus_proc]
-					cmp ax, 9
-					jg preskoci
-					mov byte [si], '0'
-					mov byte[si+1], 0
-					; ax bx cx
-				preskoci:	
-					call _int_to_string
-					mov bx, ax
-					mov ax, temp_proc
-					mov cx, make_proc
-					call _string_join
-					
-					mov     ax, make_proc
-					call    _string_length
-					mov     si, make_proc
-					add     si, ax
-				               
-					;sub     si, 4                       ; Treba oduzeti 4 znaka jer smo prethodno dodali .BIN 
-
-					mov byte [si], '.'                  ; Dodati ekstenziju .BAT ?
-					mov byte [si+1], 'S'
-					mov byte [si+2], 'A'
-					mov byte [si+3], 'V'
-					mov byte [si+4], 0
-					
-					mov bx, stack_buffer
-					mov ax, temp_proc
-					call _string_length
-					mov cx, ax
-					mov ax, make_proc
-					call _write_file
+					call make_files
+					call upisi
 					
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
@@ -189,6 +152,34 @@ novi_int09:
 
 		int 80h
 	iret
+	
+	upisi:
+					mov bx, process_name
+					mov ax, process_name
+					call _string_length
+					mov cx, ax
+					mov ax, process_file_sav 
+					call _write_file
+					
+					mov bx, process_stack
+					mov cx, word[stack_size]
+					mov ax, process_file_sta
+					call _write_file
+					
+					mov bx, app_start
+					mov cx, word[Velicina]
+					mov ax, process_file_pme
+					call _write_file
+					
+					call set_vm_buffer
+					
+					mov bx, process_vm
+					mov cx, 2001
+					mov ax, process_file_vme
+					call _write_file
+					
+	
+	ret
 		
 novi_int10:									; int 10h ne menja flagove tako da ne moramo da ih azuriramo
 		inc		byte [inBios]				; i time dobijamo na brzini, s obzirom da je on sam po sebi
@@ -283,14 +274,16 @@ call _show_cursor
 				pop	 	ax
 				pop		ax
 				xor cl,cl
-				mov si, stack_buffer
+				mov si, process_stack
 			petlja:
 					cmp word[shell_sp], sp
 					je nastav
 					pop bx
 					mov byte[si], bl
+					inc word[stack_size]
 					inc si
 					mov byte[si], bh
+					inc word[stack_size]
 					inc si
 					jmp petlja
 					
@@ -332,9 +325,124 @@ call _show_cursor
 				mov 		ax, word[temp_ax]
 				mov 		cx, word[temp_cx]
 jmp ctrl_z
-	
-	
 
+make_files:
+					mov si, temp_proc
+					mov  ax, temp_proc
+					call _string_length
+					add     si, ax  											; pomeram da bi dodao XX.SAV
+					sub si , 2
+					inc word[process_number] 
+					
+					mov ax, word[process_number]
+					
+					cmp ax, 9
+					jg preskoci
+			
+					
+					mov byte[si], '0'
+					mov byte[si+1], 0
+			
+			preskoci:	
+					call _int_to_string
+					
+					mov bx, ax
+					mov ax, temp_proc
+					mov cx, process_file_sav
+					call _string_join
+					
+					mov si, process_file_sav
+					
+					mov di, process_file_vme
+					call _string_copy
+					
+					mov di, process_file_pme
+					call _string_copy
+					
+					mov di, process_file_sta
+					call _string_copy
+					
+					mov     ax, process_file_sav
+					call    _string_length
+
+					
+					mov     si, process_file_sav
+					add     si, ax
+				               
+
+					mov byte [si], '.'                  
+					mov byte [si+1], 'S'
+					mov byte [si+2], 'A'
+					mov byte [si+3], 'V'
+					mov byte [si+4], 0
+					
+					mov     si, process_file_vme
+					add     si, ax
+				               
+					
+					
+					mov byte [si], '.'                  
+					mov byte [si+1], 'V'
+					mov byte [si+2], 'M'
+					mov byte [si+3], 'E'
+					mov byte [si+4], 0
+					
+					
+					mov     si, process_file_pme
+					add     si, ax
+				               
+
+					mov byte [si], '.'                 
+					mov byte [si+1], 'P'
+					mov byte [si+2], 'M'
+					mov byte [si+3], 'E'
+					mov byte [si+4], 0
+					
+					
+					
+					mov     si, process_file_sta
+					add     si, ax
+
+					mov byte [si], '.'                  
+					mov byte [si+1], 'S'
+					mov byte [si+2], 'T'
+					mov byte [si+3], 'A'
+					mov byte [si+4], 0
+
+
+ret	
+
+set_vm_buffer:
+      pusha
+      mov  ah,02h		; BIOS 10h: ah = 02h (Postavljanje pozicije kursora)
+      mov  dh,0h		; dl - kolona, dh - red
+      mov  dl,0h		; Pozicija 0,0 (pocetak ekrana - gornji levi ugao)
+      int  10h			; BIOS prekid za rad sa ekranom
+      xor  cx,cx		; Resetovati brojac znakova na vrednost 0
+	  mov si, process_vm
+.loop:
+      mov ah, 08h		; Ispisivati prazno mesto
+      int 10h
+	  mov byte[si], ah
+	  inc si
+	  mov byte[si], al
+	  inc si
+	  
+	  inc  cx
+      cmp  cx,2000		; Standardna velicina alfanumerickog ekrana 80x25 (2000 znakova)
+      jne  .loop
+
+     mov byte[si], 0
+
+      popa
+      ret
+
+	  
+	
+process_file_pme  	times 20 db 0
+process_file_sav  	times 20 db 0
+process_file_vme  	times 20 db 0
+process_file_sta  	times 20 db 0	
 
 inBios					db 0					; flag koji oznacava da li smo u BIOSu
 temp_ax				dw 0
@@ -362,5 +470,7 @@ KBD            			equ 060h
 EOI            			equ 020h                     
 Master_8259    		equ 020h
 
-stack_buffer times 128 db 0
+process_stack times 128 db 0
+process_vm times 2000 db 0
+stack_size dw 0
 kura         db 'kura', 13, 10, 0
