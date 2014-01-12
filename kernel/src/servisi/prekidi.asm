@@ -137,8 +137,8 @@ novi_int09:
 				
 				jmp jump_proc
 			ctrl_z:	
-					call make_files
-					call upisi
+				call make_files
+				call upisi
 					
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
@@ -171,10 +171,8 @@ novi_int09:
 					mov ax, process_file_pme
 					call _write_file
 					
-					call set_vm_buffer
-					
 					mov bx, process_vm
-					mov cx, 4001
+					mov cx, 4000
 					mov ax, process_file_vme
 					call _write_file
 					
@@ -264,8 +262,9 @@ novi_int1A:
 		iret
 
 jump_proc:
-call _clear_screen
-call _show_cursor				
+				call set_vm_buffer
+				call _clear_screen
+				call _show_cursor
 				mov		word [temp_ax], ax
 				mov		word [temp_bx], bx
 				mov		word [temp_cx], bx
@@ -423,10 +422,8 @@ set_vm_buffer:
 .loop:
       mov ah, 08h		; Ispisivati prazno mesto
       int 10h
-	  mov byte[si], ah
-	  inc si
-	  mov byte[si], al
-	  inc si
+	  mov word[si], ax
+	  add si, 2
 	  
 	  call    _get_cursor_pos             ; Da li je u pitanju poslednja kolona u liniji?
       cmp     dl, 79
@@ -442,8 +439,6 @@ set_vm_buffer:
 	  inc  cx
       cmp  cx,2000		; Standardna velicina alfanumerickog ekrana 80x25 (2000 znakova)
       jne  .loop
-
-     mov byte[si], 0
 
       popa
       ret
