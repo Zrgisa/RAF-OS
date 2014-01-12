@@ -1045,7 +1045,6 @@ delete_savs:
 		mov     bx, app_start
         call _list_sav
 		mov   si, app_start
-		mov cx, 0
 .savProveriKraj:
 		mov al, byte[si]
 		cmp al, 0
@@ -1062,19 +1061,46 @@ delete_savs:
 
 .savsObrisi:
 		mov byte[di], 0
+		
+		call .savsBrisiTrenutan
+		
+		
+		mov byte[di - 3], 'P'
+		mov byte[di - 2], 'M'
+		mov byte[di - 1], 'E'
+		
+		call .savsBrisiTrenutan
+		
+		
+		mov byte[di - 3], 'V'
+		mov byte[di - 2], 'M'
+		mov byte[di - 1], 'E'
+		
+		call .savsBrisiTrenutan
+		
+		
+		mov byte[di - 3], 'S'
+		mov byte[di - 2], 'T'
+		mov byte[di - 1], 'A'
+		
+		call .savsBrisiTrenutan
+		
+		
+		jmp .savProveriKraj
+		
+.savsBrisiTrenutan:
 		push si
 		mov si, .currentSav
 		call _print_string
-		
 		mov		si, .CrLf1
 		call	_print_string
 		pop si
-		add cx, 4
+		
 		mov ax, .currentSav
 		pusha
 		call _remove_file
 		popa
-		jmp .savProveriKraj
+		ret
 		
 .savsKraj:
 		mov si, .delEnd
@@ -1174,7 +1200,6 @@ processPrepare:
 		temp_proc			times 20 db 0
 		process_name   times 20 db 0
 		temp_write 		times 20 db 0
-	    .currentSav		times 20 db 0
 		make_proc		times 128 db 0
 		
         BinEkstenzija   	db 'BIN', 0
