@@ -174,7 +174,7 @@ novi_int09:
 					call set_vm_buffer
 					
 					mov bx, process_vm
-					mov cx, 2001
+					mov cx, 4001
 					mov ax, process_file_vme
 					call _write_file
 					
@@ -428,6 +428,17 @@ set_vm_buffer:
 	  mov byte[si], al
 	  inc si
 	  
+	  call    _get_cursor_pos             ; Da li je u pitanju poslednja kolona u liniji?
+      cmp     dl, 79
+	  jne .preskoci
+	  mov dl, 0
+	  inc dh
+	  call _move_cursor
+	  jmp .nastavi
+.preskoci:
+		inc dl
+		call _move_cursor
+.nastavi:
 	  inc  cx
       cmp  cx,2000		; Standardna velicina alfanumerickog ekrana 80x25 (2000 znakova)
       jne  .loop
@@ -471,6 +482,6 @@ EOI            			equ 020h
 Master_8259    		equ 020h
 
 process_stack times 128 db 0
-process_vm times 2000 db 0
+process_vm times 4000 db 0
 stack_size dw 0
 kura         db 'kura', 13, 10, 0
