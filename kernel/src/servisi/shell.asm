@@ -1161,8 +1161,19 @@ unsuspended:
 		mov byte [si+3], 'V'
 		mov byte [si+4], 0
 		
-		mov si, bx
-		call _print_string  
+	
+		
+		mov     ax, bx
+        mov     cx, app_start             
+        call    _load_file
+		
+		mov si, app_start
+		mov di, temp_input
+		call _string_copy
+		
+		jmp ProveriIzvrsnu
+		
+		call _print_string
 		
 	
 	jmp Komanda
