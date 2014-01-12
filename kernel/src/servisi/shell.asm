@@ -1150,11 +1150,20 @@ unsuspended:
         jmp     Komanda
 	.dobarParametar
 		mov si, bx
-		call _string_to_int  						; Rezultat ax
-	;DEBUG	
-		;call _int_to_string
-		;mov     si, ax
-		;call    _print_string
+		mov ax, si
+		call _string_length
+		
+		add si, ax
+		
+		mov byte [si], '.'                  
+		mov byte [si+1], 'S'
+		mov byte [si+2], 'A'
+		mov byte [si+3], 'V'
+		mov byte [si+4], 0
+		
+		mov si, bx
+		call _print_string  
+		
 	
 	jmp Komanda
 	

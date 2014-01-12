@@ -425,16 +425,16 @@ set_vm_buffer:
 	  mov word[si], ax
 	  add si, 2
 	  
-	  call    _get_cursor_pos             ; Da li je u pitanju poslednja kolona u liniji?
-      cmp     dl, 79
-	  jne .preskoci
-	  mov dl, 0
-	  inc dh
-	  call _move_cursor
-	  jmp .nastavi
+	  ;call    _get_cursor_pos             ; Da li je u pitanju poslednja kolona u liniji?
+      ;cmp     dl, 79
+	  ;jne .preskoci
+	  ;mov dl, 0
+	  ;inc dh
+	  ;call _move_cursor
+	  ;jmp .nastavi
 .preskoci:
-		inc dl
-		call _move_cursor
+		;inc dl
+		;call _move_cursor
 .nastavi:
 	  inc  cx
       cmp  cx,2000		; Standardna velicina alfanumerickog ekrana 80x25 (2000 znakova)
