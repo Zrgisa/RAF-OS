@@ -279,19 +279,29 @@ PunoIme:
         call    _string_compare
         jnc     ComDatoteka
 
-		push	si
-		push	di
-		mov		si, input
-		mov		di, temp_proc
-		call	_string_copy
-		pop 	di
-		pop		si
-		
+		mov word[shell_sp] , sp
 		push ax
 		mov ax, 01h
 		call processPrepare
 		pop ax
 		
+		cmp byte[resumed], 0
+		je call_program1
+		
+		mov si,  process_stack
+		add si, word[stack_size]
+
+restore_stack1:
+		cmp si, process_stack
+		je call_suspended_program1
+		sub si, 2
+		mov bx, word[si]
+		push bx
+		jmp restore_stack1		
+call_suspended_program1:
+		mov byte[resumed], 0
+		iret
+call_program1:		
         call    app_start                   ; Poziv ucitanog programa
 pomocna1:		
 		mov		ax, (prompt+9)              ; Path pocetak
@@ -319,12 +329,30 @@ ComDatoteka:
         mov     ax, es
         add     ax, app_seg - 10h           ; Od adrese segmenta oduzimamo 10h zbog COM PSP (to je 100h linearno)         
         mov     es, ax
-
+		mov word[shell_sp] , sp
 		push ax
 		mov ax, 02h
 		call processPrepare
 		pop ax
 		
+		cmp byte[resumed], 0
+		je call_program2
+		
+		mov si,  process_stack
+		add si, word[stack_size]
+
+restore_stack2:
+		cmp si, process_stack
+		je call_suspended_program2
+		sub si, 2
+		mov bx, word[si]
+		push bx
+		jmp restore_stack2		
+call_suspended_program2:
+		mov byte[resumed], 0
+		iret
+		
+call_program2:		
         call    app_start                   ; Poziv ucitanog programa 
 pomocna2:	
 		popa
@@ -357,12 +385,28 @@ BatDatoteka:
 
         mov     ax, app_start               ; Ako jeste, pocetak programa 
         mov word bx, [Velicina]             ; i njegova velicina u memoriji 
-		
+		mov word[shell_sp] , sp
 		push ax
 		mov ax, 03h
 		call processPrepare
 		pop ax
+		cmp byte[resumed], 0
+		je call_program3
 		
+		mov si,  process_stack
+		add si, word[stack_size]
+
+restore_stack3:
+		cmp si, process_stack
+		je call_suspended_program3
+		sub si, 2
+		mov bx, word[si]
+		push bx
+		jmp restore_stack3		
+call_suspended_program3:
+		mov byte[resumed], 0
+		iret
+call_program3:		
         call    _run_batch                  ; prosledjuju se skript interpreteru
 pomocna3:		
 		mov		ax, (prompt+9)              ; Path pocetak
@@ -403,11 +447,29 @@ NijeBin:
         mov     es, ax                
         mov     ds, ax
 		
+		mov word[shell_sp] , sp
 		push ax
 		mov ax, 04h
 		call processPrepare
 		pop ax
 		
+		cmp byte[resumed], 0
+		je call_program4
+		
+		mov si,  process_stack
+		add si, word[stack_size]
+
+restore_stack4:
+		cmp si, process_stack
+		je call_suspended_program4
+		sub si, 2
+		mov bx, word[si]
+		push bx
+		jmp restore_stack4		
+call_suspended_program4:
+		mov byte[resumed], 0
+		iret
+call_program4:		
         call    app_start                   ; Poziv ucitanog programa
 pomocna4:	        
 		popa
@@ -444,12 +506,29 @@ NijeCom:
         call    _load_file_current_folder
         jc      ProveriPath                 ; Preskoci ako se dogodila greska pri ucitavanju datoteke
 		
-		
+		mov word[shell_sp] , sp
 		push ax
 		mov ax, 05h
 		call processPrepare
 		pop ax
+		cmp byte[resumed], 0
+		je call_program5
 		
+		mov si,  process_stack
+		add si, word[stack_size]
+
+restore_stack5:
+		cmp si, process_stack
+		je call_suspended_program5
+		sub si, 2
+		mov bx, word[si]
+		push bx
+		jmp restore_stack5		
+call_suspended_program5:
+		mov byte[resumed], 0
+		iret
+		
+call_program5:		
         mov     ax, app_start               ; Adresa skript teksta
         mov word bx, [Velicina]             ; Velicina teksta
         call    _run_batch                  ; Poziv interpretera
@@ -1131,7 +1210,11 @@ suspended:
 	jmp Komanda
 	.Naslov1 db 13,10, ' Procesi koji se mogu odsuspendovati: ', 0
 	.CrLf1   db  13, 10, 10, 0
-; ------------------------------------------------------------------
+; ------------------------------------------------------------------------
+;Funkcija koja se poziva pri internoj komandi fg
+;U funkciji je implementirano vracanje video memorije
+;Imena programa, i memorije programa
+;--------------------------------------------------------------------------------
 unsuspended:
 	mov 	si, input
 	call    _string_parse
@@ -1149,7 +1232,12 @@ unsuspended:
         call    _print_string
         jmp     Komanda
 	.dobarParametar
+		
 		mov si, bx
+		mov di, resumed_file
+		call _string_copy	
+	
+		mov si, resumed_file
 		mov ax, si
 		call _string_length
 		
@@ -1161,23 +1249,81 @@ unsuspended:
 		mov byte [si+3], 'V'
 		mov byte [si+4], 0
 		
-	
 		
-		mov     ax, bx
-        mov     cx, app_start             
+		mov     ax, resumed_file
+        call _file_exists
+		jnc .to_be_continued
+		mov si , ProcNePostoji 
+		call _print_string
+		jmp Komanda
+.to_be_continued:		
+		mov     cx, app_start            
         call    _load_file
 		
 		mov si, app_start
 		mov di, temp_input
 		call _string_copy
+		mov di, input
+		call _string_copy
+		mov byte[resumed]  , 1
 		
+		mov si , resumed_file
+		mov ax, resumed_file
+		call _string_length
+		
+		add si , ax
+		sub si , 4
+		
+		mov byte [si], '.'                  
+		mov byte [si+1], 'P'
+		mov byte [si+2], 'M'
+		mov byte [si+3], 'E'
+		mov byte [si+4], 0
+		
+		mov     ax, resumed_file
+        mov     cx, app_start            
+        call    _load_file
+		
+		mov si , resumed_file
+		mov ax, resumed_file
+		call _string_length
+		
+		add si , ax
+		sub si , 4
+		
+		mov byte [si], '.'                  
+		mov byte [si+1], 'S'
+		mov byte [si+2], 'T'
+		mov byte [si+3], 'A'
+		mov byte [si+4], 0
+		
+		mov     ax, resumed_file
+        mov     cx, process_stack             
+        call    _load_file
+		mov word[stack_size] , bx
+		
+	
+		
+		mov si , resumed_file
+		mov ax, resumed_file
+		call _string_length
+		
+		add si , ax
+		sub si , 4
+		
+		mov byte [si], '.'                  
+		mov byte [si+1], 'V'
+		mov byte [si+2], 'M'
+		mov byte [si+3], 'E'
+		mov byte [si+4], 0
+		
+		mov     ax, resumed_file
+        mov     cx, process_vm             
+        call    _load_file
+		call set_vm
+		
+		call _hide_cursor
 		jmp ProveriIzvrsnu
-		
-		call _print_string
-		
-	
-	jmp Komanda
-	
 ; ------------------------------------------------------------------
 exit:
         ret
@@ -1204,11 +1350,46 @@ processPrepare:
 	mov		di, process_name
 	call	_string_copy
 	pop 	di
-	pop		si
-	mov word[shell_sp] , sp		
+	pop	si
 	ret
 ;---------------------------------------------------------------------
+set_vm:
+    pusha
+	mov si, process_vm
+	
+	mov dh, 0
+	
+.vmKolone:
+	call .vmIspisiRed
+	inc dh
+	cmp dh, 25
+	jne .vmKolone
+	jmp .vmKraj
 
+.vmIspisiRed:
+	mov dl, 0
+	
+.vmSledeci:
+	call _move_cursor
+    
+	mov bh, 0h
+	mov cx, 01h
+	mov al, byte[si]
+	mov bl, byte[si+1]
+	add si, 2
+	mov ah, 09h
+	int 10h
+	
+	
+	inc dl
+	cmp dl, 80
+	jne .vmSledeci
+	ret
+.vmKraj:
+    popa
+    ret
+	
+;--------------------------------------------------------------
         tmp_string      	times 15 db 0
         arg0            		times 32 db 0
         Velicina        	dw 0
@@ -1221,6 +1402,8 @@ processPrepare:
 		process_name   times 20 db 0
 		temp_write 		times 20 db 0
 		make_proc		times 128 db 0
+		resumed			db 0
+		resumed_file		times 20 db 0
 		
         BinEkstenzija   	db 'BIN', 0
         ComEkstenzija  db 'COM', 0
@@ -1235,6 +1418,7 @@ processPrepare:
         NemaImena1     db 'Nije zadato ime direktorijuma', 13, 10, 0
         NemaImena2     db 'Nije zadato ime odredisne datoteke', 13, 10, 0
         DatNePostoji    	db 'Datoteka ne postoji', 13, 10, 0
+		ProcNePostoji    	db 'Proces ne postoji', 13, 10, 0
         VecPostoji      	db 'Datoteka sa odredisnim imenom vec postoji', 13, 10, 0
         DatPrevelika    	db 'Izvorna datoteka je suvise velika (max 32KB)', 0
         verzija         		db 'RAF_OS', RAF_OS_VER, 13, 10, 0
@@ -1278,5 +1462,6 @@ processPrepare:
 		
 		PathSpace		times 256 db 0
 		temp_input		times 128 db 0
+		stack_size 		dw 0
 
   

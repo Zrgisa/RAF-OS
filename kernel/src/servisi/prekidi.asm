@@ -119,7 +119,6 @@ novi_int08:									; Poziva stari int 08h pa zatim rutinu za stampanje
 		iret
 		
 novi_int09:
-
 		in      al, KBD                     		; Citanje sken koda iz I/O registra tastature
 		cmp     al, Z_DOWN	            	; Poredjenje sken koda sa sken kodom tastera S 
 		jne     not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
@@ -269,27 +268,23 @@ jump_proc:
 				mov		word [temp_bx], bx
 				mov		word [temp_cx], bx
 				
-				pop		ax
-				pop	 	ax
-				pop		ax
-				xor cl,cl
-				mov si, process_stack
+			
+					mov si, process_stack
+					mov word[stack_size], 0
 			petlja:
 					cmp word[shell_sp], sp
 					je nastav
 					pop bx
-					mov byte[si], bl
+					mov word[si], bx
 					inc word[stack_size]
-					inc si
-					mov byte[si], bh
 					inc word[stack_size]
-					inc si
+					add si,2
 					jmp petlja
 					
 			nastav:
-				mov byte[si], 0
-				push ax
-				mov      ax,  [shell_cs]
+				pop		ax
+				pop	 	ax
+				mov   ax,  [shell_cs]
 				push ax
 				
 			pom1:
@@ -439,9 +434,7 @@ set_vm_buffer:
 	inc dl
 	cmp dl, 80
 	jne .vmSledeci
-	
 	ret
-	
 .vmKraj:
     popa
     ret
@@ -479,5 +472,4 @@ Master_8259    		equ 020h
 
 process_stack times 128 db 0
 process_vm times 4000 db 0
-stack_size dw 0
 kura         db 'kura', 13, 10, 0
