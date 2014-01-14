@@ -266,6 +266,8 @@ novi_int1A:
 
 jump_proc:
 				pusha
+				call _get_cursor_pos
+				push dx
 				call set_vm_buffer
 				call _clear_screen
 				call _show_cursor

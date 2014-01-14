@@ -299,6 +299,8 @@ restore_stack1:
 		push bx
 		jmp restore_stack1
 call_suspended_program1:
+		pop dx
+		call _move_cursor	
 		popa
 		mov byte[resumed], 0
 		iret
