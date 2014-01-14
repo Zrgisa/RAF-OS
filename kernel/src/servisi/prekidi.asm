@@ -119,6 +119,7 @@ novi_int08:									; Poziva stari int 08h pa zatim rutinu za stampanje
 		iret
 		
 novi_int09:
+		pusha
 		in      al, KBD                     		; Citanje sken koda iz I/O registra tastature
 		cmp     al, Z_DOWN	            	; Poredjenje sken koda sa sken kodom tastera S 
 		jne     not_ctrl_z                     	; U koliko nije pritisnut taster S izlazimo na kraj
@@ -132,12 +133,13 @@ novi_int09:
 			cmp byte[is_shell] , 00h
 			je not_ctrl_z
 				mov byte[is_shell] , 00h
-
+				popa
 				
 				jmp jump_proc
 			ctrl_z:	
 				call make_files
 				call upisi
+				jmp kraj
 					
 			;DEBUG
 				;mov si,is_shell				; ispisuje se poruka da je pokrenut
@@ -146,6 +148,8 @@ novi_int09:
 				
 				
 	not_ctrl_z:
+		popa
+	kraj:
 		mov     al, EOI                         
 		out	    Master_8259, al
 
@@ -261,6 +265,7 @@ novi_int1A:
 		iret
 
 jump_proc:
+				pusha
 				call set_vm_buffer
 				call _clear_screen
 				call _show_cursor

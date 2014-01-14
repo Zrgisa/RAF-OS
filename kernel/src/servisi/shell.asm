@@ -297,8 +297,9 @@ restore_stack1:
 		sub si, 2
 		mov bx, word[si]
 		push bx
-		jmp restore_stack1		
+		jmp restore_stack1
 call_suspended_program1:
+		popa
 		mov byte[resumed], 0
 		iret
 call_program1:		
@@ -349,6 +350,7 @@ restore_stack2:
 		push bx
 		jmp restore_stack2		
 call_suspended_program2:
+		popa
 		mov byte[resumed], 0
 		iret
 		
@@ -404,6 +406,7 @@ restore_stack3:
 		push bx
 		jmp restore_stack3		
 call_suspended_program3:
+		popa
 		mov byte[resumed], 0
 		iret
 call_program3:		
@@ -467,6 +470,7 @@ restore_stack4:
 		push bx
 		jmp restore_stack4		
 call_suspended_program4:
+		popa
 		mov byte[resumed], 0
 		iret
 call_program4:		
@@ -525,6 +529,7 @@ restore_stack5:
 		push bx
 		jmp restore_stack5		
 call_suspended_program5:
+		popa
 		mov byte[resumed], 0
 		iret
 		
