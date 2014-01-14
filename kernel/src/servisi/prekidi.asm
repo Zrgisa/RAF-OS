@@ -166,7 +166,7 @@ novi_int09:
 					call _write_file
 					
 					mov bx, app_start
-					mov cx, word[Velicina]
+					mov cx, 8000h
 					mov ax, process_file_pme
 					call _write_file
 					

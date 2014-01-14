@@ -1267,6 +1267,9 @@ unsuspended:
 		call _string_copy
 		mov byte[resumed]  , 1
 		
+		mov ax, resumed_file
+		call _remove_file
+		
 		mov si , resumed_file
 		mov ax, resumed_file
 		call _string_length
@@ -1283,6 +1286,10 @@ unsuspended:
 		mov     ax, resumed_file
         mov     cx, app_start            
         call    _load_file
+		
+		
+		mov ax, resumed_file
+		call _remove_file
 		
 		mov si , resumed_file
 		mov ax, resumed_file
@@ -1302,7 +1309,8 @@ unsuspended:
         call    _load_file
 		mov word[stack_size] , bx
 		
-	
+		mov ax, resumed_file
+		call _remove_file
 		
 		mov si , resumed_file
 		mov ax, resumed_file
@@ -1321,8 +1329,11 @@ unsuspended:
         mov     cx, process_vm             
         call    _load_file
 		call set_vm
+		call _show_cursor
 		
-		call _hide_cursor
+		mov ax, resumed_file
+		call _remove_file
+		
 		jmp ProveriIzvrsnu
 ; ------------------------------------------------------------------
 exit:
